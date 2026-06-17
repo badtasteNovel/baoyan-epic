@@ -1,0 +1,5 @@
+# syntax=docker/dockerfile:1
+# 從my-php-module 拿取打包資源
+FROM nginxinc/nginx-unprivileged:1.31.1-alpine@sha256:a790605d388dad2b1b6873922e83d798da7eb1023c700478f2030190dc3f0434 as nginx
+WORKDIR /var/www/html
+COPY --from=my-php-release:debian-bookworm --chown=nginx:nginx /var/www/html/public ./public

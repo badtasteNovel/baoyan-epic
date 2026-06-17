@@ -53,16 +53,6 @@ tasks:
       - helm upgrade --install service ./deploy/helm/app/services
           --namespace service
           --values deploy/helm/app/services/values-default.yaml
-      - |
-        DB_USER="$(grep '^TEMPORAL_DB_USER=' environment/.env | cut -d'=' -f2-)"
-        helm upgrade --install temporal temporal \
-          --repo https://go.temporal.io/helm-charts \
-          --version 0.73.2 \
-          --namespace service \
-          --values deploy/values/temporal/values.yaml \
-          --values deploy/values/temporal/values-default.yaml \
-          --set "server.config.persistence.default.sql.user=$DB_USER" \
-          --set "server.config.persistence.visibility.sql.user=$DB_USER"
 
   pulse:
     desc: "📊 部署 monitor 監控基礎設施（pulse-redis、monitor-postgresql）"
@@ -117,6 +107,7 @@ tasks:
           --create-namespace
           --values deploy/helm/infra/gateways/charts/internal/values.yaml
           --values deploy/helm/infra/gateways/charts/internal/values-default.yaml
+      - task host
 
 
 

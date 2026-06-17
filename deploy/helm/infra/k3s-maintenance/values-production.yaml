@@ -4,10 +4,11 @@ coreDnsCustom:
     - registry.local
     - registry-ui.local
     - forgejo.local
-    - sureway.local
     - argo.local
+    - baoyan-dev.local
     - grafana.local
     - temporal.local
     - portainer.local
     - sql.local
-    - lg-laravel.local
+    - baoyan-epic.local
+

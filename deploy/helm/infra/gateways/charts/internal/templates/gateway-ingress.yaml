@@ -24,7 +24,7 @@ spec:
             name: internal-gateway-proxy
             port:
               number: 80
-  - host: lg-laravel.local
+  - host: baoyan-epic.local
     http:
       paths: *web_path
   - host: {{ .Values.pulse.hostname }}

@@ -204,6 +204,30 @@ tasks:
         wait
         END
 
+  host:
+    desc: "🌐 比對 external-gateway 與 internal-gateway 實際部署的 host，確認兩邊是否同步"
+    silent: true
+    cmds:
+      - |
+        EXT=$(kubectl get ingress external-gateway -n gateway \
+          -o jsonpath='{range .spec.rules[*]}{.host}{"\n"}{end}' 2>/dev/null | sort)
+        INT=$(kubectl get ingress internal-gateway -n internal-gateway \
+          -o jsonpath='{range .spec.rules[*]}{.host}{"\n"}{end}' 2>/dev/null | sort)
+
+        echo "=== external-gateway ==="
+        echo "$EXT" | sed 's/^/  ✓ /'
+
+        echo ""
+        echo "=== internal-gateway ==="
+        echo "$INT" | sed 's/^/  ✓ /'
+
+        ONLY_EXT=$(comm -23 <(echo "$EXT") <(echo "$INT"))
+        ONLY_INT=$(comm -13 <(echo "$EXT") <(echo "$INT"))
+
+        echo ""
+        echo "=== ✅ 可連線的 host（兩邊都有）==="
+        comm -12 <(echo "$EXT") <(echo "$INT") | sed 's/^/  ✓ /'
+
   lifecycle:
     desc: "🔄 重啟 Pod 所屬的 Deployment (使 Secret/Config 生效)"
     silent: true

@@ -19,7 +19,7 @@ spec:
   tls:
   - hosts:
     - sureway.local
-    - lg-laravel.local
+    - baoyan-epic.local
     - portainer.local
     - temporal.local
     - forgejo.local
@@ -37,7 +37,7 @@ spec:
             name: external-gateway-proxy
             port:
               number: 80
-  - host: lg-laravel.local
+  - host: baoyan-epic.local
     http:
       paths: *web_path
   - host: temporal.local

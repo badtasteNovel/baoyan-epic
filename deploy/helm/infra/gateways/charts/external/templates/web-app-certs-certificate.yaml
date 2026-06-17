@@ -13,7 +13,7 @@ spec:
     name: local-ca-issuer
     kind: ClusterIssuer
   dnsNames:
-    - lg-laravel.local
+    - baoyan-epic.local
     - sql.local
     - sureway.local
     - portainer.local

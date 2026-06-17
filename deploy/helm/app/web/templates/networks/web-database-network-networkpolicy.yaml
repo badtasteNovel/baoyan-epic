@@ -16,12 +16,4 @@ spec:
       io.kompose.service: database
   policyTypes:
    - Ingress
-  ingress: # 入站流量
-    - from: 
-      - namespaceSelector:
-          matchLabels:
-            kubernetes.io/metadata.name: service
-        podSelector:
-          matchLabels:
-            app: road-runner
-            io.kompose.network/service-app-network: "true"
+  ingress: []

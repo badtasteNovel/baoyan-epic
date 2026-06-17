@@ -1,0 +1,11 @@
+FROM mysql:8.0
+
+ENV TZ=Asia/Taipei
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN groupadd -r backupgroup && useradd -r -g backupgroup -d /backups backupuser
+
+RUN mkdir -p /backups && chown -R backupuser:backupgroup /backups
+
+COPY --chown=backupuser:backupgroup ./scripts/backup.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/backup.sh

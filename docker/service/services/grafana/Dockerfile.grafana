@@ -1,0 +1,9 @@
+FROM grafana/grafana:latest
+
+# 直接在複製時指定擁有者為 grafana (UID 472 是官方預設)
+# 這樣你完全不需要寫 USER root 或 RUN chown
+COPY --chown=grafana:grafana ./monitoring/datasources/datasource.yml /etc/grafana/provisioning/datasources/
+COPY --chown=grafana:grafana ./monitoring/dashboards /etc/grafana/provisioning/dashboards/
+
+# 保持使用官方預設的低權限用戶運行
+USER grafana

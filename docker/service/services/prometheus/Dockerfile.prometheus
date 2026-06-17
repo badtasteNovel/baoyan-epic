@@ -1,0 +1,8 @@
+FROM prom/prometheus:latest
+
+# 將本地的 prometheus.yml 複製進映像檔
+# 官方 Prometheus 映像檔預設路徑就是 /etc/prometheus/
+COPY ./monitoring/prometheus.yml /etc/prometheus/prometheus.yml
+
+# 如果你有額外的告警規則檔案 (rules)，也可以一併 COPY 進去
+# COPY ./monitoring/rules /etc/prometheus/rules/
