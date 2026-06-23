@@ -5,6 +5,10 @@ config:
       prefix: registry.local
       credentials: pullsecret:argocd/local-registry-auth
 
+extraArgs:
+  - --git-commit-message
+  - "build: update {{range .AppChanges}}{{.Image}} to {{.NewTag}} {{end}}[skip ci]"
+
 extraEnv:
   - name: SSL_CERT_FILE
     value: /etc/ssl/certs/registry.local.crt
