@@ -2,6 +2,12 @@
 version: '3'
 
 vars:
+  WEB_NS:
+    sh: grep '^K3S_WEB_RESOURCE_NAMESPACE=' environment/.env 2>/dev/null | cut -d'=' -f2- || echo "web-baoyan"
+  ARGOCD_REPO_URL:
+    sh: grep '^ARGOCD_REPO_URL=' environment/.env 2>/dev/null | cut -d'=' -f2- || echo ""
+  ARGOCD_REPO_REVISION:
+    sh: grep '^ARGOCD_REPO_REVISION=' environment/.env 2>/dev/null | cut -d'=' -f2- || echo "main"
   NETPOL_RENDERER: |
     #!/bin/bash
     set -euo pipefail
@@ -14,11 +20,42 @@ vars:
     rm -f /tmp/netpol-render.sh /tmp/helm-netpol.yaml
 
 tasks:
+  namespaces:
+    desc: "🗂️ 建立所有必要的 namespace（含 Helm 管理標籤，web namespace 從 environment/.env 讀取）"
+    silent: true
+    cmds:
+      - |
+        # 格式: "namespace:release-name"
+        # web namespace 從 environment/.env 動態讀取，其餘為共用基礎設施
+        for ENTRY in \
+          "gateway:gateway" \
+          "internal-gateway:internal-gateway" \
+          "service:service" \
+          "monitor:monitor" \
+          "forgejo:forgejo" \
+          "argocd:argocd" \
+          "{{.WEB_NS}}:web"; do
+          NS="${ENTRY%%:*}"
+          RELEASE="${ENTRY##*:}"
+          kubectl apply -f - <<EOF
+        apiVersion: v1
+        kind: Namespace
+        metadata:
+          name: $NS
+          labels:
+            app.kubernetes.io/managed-by: Helm
+          annotations:
+            meta.helm.sh/release-name: $RELEASE
+            meta.helm.sh/release-namespace: $NS
+            helm.sh/resource-policy: keep
+        EOF
+        done
+
   default:
     desc: "部屬"
     silent: true
     cmds:
-      - kubectl apply -k deploy/k8s/base
+      - task: namespaces
       - task: network
       - task: cert
       - task: ingress
@@ -37,7 +74,7 @@ tasks:
     cmds:
       - |
         PULL_SECRET="local-registry-auth"
-        for NS in web service; do
+        for NS in {{.WEB_NS}} service; do
           kubectl patch serviceaccount default -n "$NS" \
             -p "{\"imagePullSecrets\": [{\"name\": \"${PULL_SECRET}\"}]}" 2>/dev/null \
             && echo "✅ default serviceaccount ($NS): imagePullSecrets 已設定" \
@@ -49,13 +86,13 @@ tasks:
     silent: true
     cmds:
       - helm upgrade --install web-database ./deploy/helm/app/web-database
-          --namespace web
+          --namespace {{.WEB_NS}}
           --values deploy/helm/app/web-database/values-production.yaml
       - helm upgrade --install redis ./deploy/helm/app/redis
-          --namespace web
+          --namespace {{.WEB_NS}}
           --values deploy/helm/app/redis/values-production.yaml
       - helm upgrade --install web ./deploy/helm/app/web
-          --namespace web
+          --namespace {{.WEB_NS}}
           --values deploy/helm/app/web/values-production.yaml
       - helm upgrade --install workflow-database ./deploy/helm/app/workflow-database
           --namespace service
@@ -92,7 +129,6 @@ tasks:
     desc: "🌐 部署網路基礎（Cilium 必須最先啟動，因為 kube-proxy 已移除）"
     silent: true
     cmds:
-      - kubectl apply -k deploy/k8s/base
       - helm dependency update ./deploy/helm/infra/cilium
       - helm upgrade --install cilium ./deploy/helm/infra/cilium
           --namespace kube-system
@@ -136,7 +172,6 @@ tasks:
       - sh: kubectl get pv nas-forgejo-git-backup
         msg: "PersistentVolume 'nas-forgejo-git-backup' 不存在，請先建立 NAS PV 再執行"
     cmds:
-      - kubectl apply -k deploy/k8s/base
       - helm upgrade --install forgejo-db ./deploy/helm/app/forgejo-db
           --namespace forgejo
           --values deploy/helm/app/forgejo-db/values-production.yaml
@@ -329,7 +364,7 @@ tasks:
       - helm upgrade --install app-certifications ./deploy/helm/infra/app-certifications
           --namespace cert-manager
       - kubectl wait --for=condition=Ready certificate/printer-cert
-          --namespace web --timeout=120s
+          --namespace {{.WEB_NS}} --timeout=120s
 
 
 
@@ -345,7 +380,6 @@ tasks:
           --namespace kube-system
           --values deploy/helm/infra/k3s-maintenance/values.yaml
           --values deploy/helm/infra/k3s-maintenance/values-production.yaml
-      - kubectl apply -k deploy/k8s/base
 
   git-ops:
     desc: "🏗️ 部署 GitOps 基礎設施（cert-manager、local-registry、k3s-maintenance、ArgoCD）"
@@ -364,4 +398,7 @@ tasks:
           --wait
       - helm upgrade --install argocd-apps ./deploy/helm/infra/argocd-apps
           --namespace argocd
+          --set repo.url="{{.ARGOCD_REPO_URL}}"
+          --set repo.targetRevision="{{.ARGOCD_REPO_REVISION}}"
+          --set webNamespace="{{.WEB_NS}}"
           --wait

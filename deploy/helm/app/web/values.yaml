@@ -46,6 +46,9 @@ php_fpm:
       memory: "512Mi"
 
 
+ingress:
+  hostnames: []
+
 vite_serve:
   enabled: true
 portainer:

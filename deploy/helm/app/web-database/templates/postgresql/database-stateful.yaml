@@ -6,7 +6,7 @@ metadata:
     io.kompose.service: database
     {{ include "base.metadata.labels.managed_by" . | nindent 4 }}
   name: database
-  namespace: web
+  namespace: {{ .Release.Namespace }}
 spec:
   serviceName: "database"
   replicas: 1

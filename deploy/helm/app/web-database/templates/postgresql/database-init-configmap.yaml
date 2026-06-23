@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: database-config
-  namespace: web
+  namespace: {{ .Release.Namespace }}
 data:
   # 注意：Key 必須是 .sh，Postgres 才會用 Shell 執行它
   postgresql.conf: |

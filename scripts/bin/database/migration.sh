@@ -1,12 +1,13 @@
 DATABASE_CONNECTION="migrate_runner"
 readonly DATABASE_CONNECTION
+WEB_NS=$(grep '^K3S_WEB_RESOURCE_NAMESPACE=' environment/.env 2>/dev/null | cut -d'=' -f2- || echo "web-baoyan")
 # ---------------------------------------------------------
 # 私有穿透函式 (The "Safe" Tunnel)
 # ---------------------------------------------------------
 _kexec() {
     # 使用 env 強制注入臨時變數，這不會改變 Pod 內的持久設定
     # 只會影響這一次透過 kubectl 執行的 php 指令
-    kubectl exec -i deployment/php-fpm-nginx -n web -c php-fpm -- \
+    kubectl exec -i deployment/php-fpm-nginx -n "${WEB_NS}" -c php-fpm -- \
         env SESSION_DRIVER=array "$@"
 }
 

@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: database-backup-shell
-  namespace: web # <--- 這裡指定門牌號碼
+  namespace: {{ .Release.Namespace }}
 data:
   database-backup.sh: |
     #!/bin/sh

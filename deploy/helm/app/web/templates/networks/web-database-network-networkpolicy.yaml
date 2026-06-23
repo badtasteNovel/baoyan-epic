@@ -9,7 +9,7 @@ metadata:
     description: "限制/擴展某些流量可以進入database"
     {{ include "base.metadata.annotations.release" . | nindent 4 }}
   name: web-database-network
-  namespace: web
+  namespace: {{ .Release.Namespace }}
 spec:
   podSelector: 
     matchLabels:

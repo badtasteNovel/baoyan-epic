@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: vite-serve
-  namespace: web # <--- 這裡指定門牌號碼
+  namespace: {{ .Release.Namespace }}
   labels:
     io.kompose.service: vite-serve
     {{ include "base.metadata.labels.managed_by" . | nindent 4 }}

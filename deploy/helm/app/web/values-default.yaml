@@ -17,6 +17,12 @@ nginx:
       cpu: "100m"
       memory: "64Mi"
 
+ingress:
+  hostnames:
+    - baoyan-epic.local
+    - sureway.local
+    - pulse.test
+
 vite_serve:
   enabled: true
 

@@ -117,7 +117,7 @@ shell() {
 }
 shellSql() {
     local POD="database-0"
-    local NS="web"
+    local NS="${WEB_NS:-web-baoyan}"
     local CONTAINER="postgres-db"
 
     local POSTGRES_USER POSTGRES_DB

@@ -9,7 +9,7 @@ metadata:
     description: "允許來自 internal-gateway 命名空間的 Ingress 流量"
     {{ include "base.metadata.annotations.release" . | nindent 4 }}
   name: web-app-network
-  namespace: web
+  namespace: {{ .Release.Namespace }}
 spec:
   podSelector: &webAppSelector
     matchLabels:

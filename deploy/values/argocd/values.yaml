@@ -1,11 +1,6 @@
 configs:
   params:
     server.insecure: "true"
-  repositories:
-    forgejo-repo:
-      url: http://forgejo-http.forgejo.svc.cluster.local:3000
-      insecure: "true"
-      type: git
 
 global:
   domain: argocd.local

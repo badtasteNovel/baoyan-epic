@@ -14,22 +14,6 @@ metadata:
 spec:
   ingressClassName: internal-traefik
   rules:
-  - host: sureway.local
-    http:
-      paths: &web_path
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: internal-gateway-proxy
-            port:
-              number: 80
-  - host: baoyan-epic.local
-    http:
-      paths: *web_path
-  - host: {{ .Values.pulse.hostname }}
-    http:
-      paths: *web_path
   - host: grafana.local
     http:
       paths:

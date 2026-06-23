@@ -1,0 +1,29 @@
+{{- if .Values.ingress.hostnames }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-app-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{ include "base.metadata.labels.managed_by" . | nindent 4 }}
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: >-
+      internal-gateway-internal-body-size@kubernetescrd
+    {{ include "base.metadata.annotations.release" . | nindent 4 }}
+spec:
+  ingressClassName: internal-traefik
+  rules:
+  {{- range .Values.ingress.hostnames }}
+  - host: {{ . }}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: nginx-service
+              port:
+                number: 80
+  {{- end }}
+{{- end }}

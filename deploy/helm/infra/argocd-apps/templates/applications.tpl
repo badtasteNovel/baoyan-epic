@@ -1,5 +1,6 @@
-{{- $protocol := ternary "https" "http" .Values.forgejo.ssl -}}
-{{- $repoURL := printf "%s://%s:%v/%s/%s.git" $protocol .Values.forgejo.host .Values.forgejo.port .Values.forgejo.org .Values.forgejo.repo -}}
+{{- $repoURL := .Values.repo.url -}}
+{{- $targetRevision := .Values.repo.targetRevision -}}
+{{- $webNS := .Values.webNamespace -}}
 {{- $hook := "post-install,post-upgrade" -}}
 
 # ── web ───────────────────────────────────────────────────────────────────────
@@ -16,14 +17,14 @@ spec:
   project: default
   source:
     repoURL: {{ $repoURL }}
-    targetRevision: HEAD
+    targetRevision: {{ $targetRevision }}
     path: deploy/helm/app/web-database
     helm:
       valueFiles:
         - values-production.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: web
+    namespace: {{ $webNS }}
   syncPolicy:
     automated:
       prune: false
@@ -41,14 +42,14 @@ spec:
   project: default
   source:
     repoURL: {{ $repoURL }}
-    targetRevision: HEAD
+    targetRevision: {{ $targetRevision }}
     path: deploy/helm/app/redis
     helm:
       valueFiles:
         - values-production.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: web
+    namespace: {{ $webNS }}
   syncPolicy:
     automated:
       prune: false
@@ -68,14 +69,14 @@ spec:
   project: default
   source:
     repoURL: {{ $repoURL }}
-    targetRevision: HEAD
+    targetRevision: {{ $targetRevision }}
     path: deploy/helm/app/web
     helm:
       valueFiles:
         - values-production.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: web
+    namespace: {{ $webNS }}
   syncPolicy:
     automated:
       prune: false
@@ -95,7 +96,7 @@ spec:
   project: default
   source:
     repoURL: {{ $repoURL }}
-    targetRevision: HEAD
+    targetRevision: {{ $targetRevision }}
     path: deploy/helm/app/workflow-database
     helm:
       valueFiles:
@@ -122,7 +123,7 @@ spec:
   project: default
   source:
     repoURL: {{ $repoURL }}
-    targetRevision: HEAD
+    targetRevision: {{ $targetRevision }}
     path: deploy/helm/app/services
     helm:
       valueFiles:

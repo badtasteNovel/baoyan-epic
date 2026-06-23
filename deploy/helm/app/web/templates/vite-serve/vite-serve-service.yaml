@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: vite-serve-service
-  namespace: web # <--- 這裡指定門牌號碼
+  namespace: {{ .Release.Namespace }}
   labels:
     {{ include "base.metadata.labels.managed_by" . | nindent 4 }}
   annotations:

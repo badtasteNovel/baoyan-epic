@@ -1,11 +1,18 @@
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: '3'
+vars:
+  WEB_NS:
+    sh: grep '^K3S_WEB_RESOURCE_NAMESPACE=' environment/.env 2>/dev/null | cut -d'=' -f2- || echo "web-baoyan"
+  PROJECT_NAME:
+    sh: grep '^K3S_PROJECT_NAME=' environment/.env 2>/dev/null | cut -d'=' -f2- || echo "baoyan"
+  WEB_HOSTNAME:
+    sh: grep '^K3S_WEB_HOSTNAME=' environment/.env 2>/dev/null | cut -d'=' -f2- || echo "baoyan-epic.local,sureway.local,pulse.test"
 tasks:
   default:
     desc: "🖥️ 完整本地開發環境（網路 + 入口 + 應用）"
     silent: true
     cmds:
-      - kubectl apply -k deploy/k8s/base
+      - task: namespaces
       - task: network
       - task: cert
       - task: ingress
@@ -19,13 +26,42 @@ tasks:
       - task: registry-auth
 
 
+  namespaces:
+    desc: "🗂️ 建立所有必要的 namespace（含 Helm 管理標籤，web namespace 從 environment/.env 讀取）"
+    silent: true
+    cmds:
+      - |
+        # 格式: "namespace:release-name"
+        # web namespace 從 environment/.env 動態讀取，其餘為共用基礎設施
+        for ENTRY in \
+          "gateway:gateway" \
+          "internal-gateway:internal-gateway" \
+          "service:service" \
+          "monitor:monitor" \
+          "{{.WEB_NS}}:web"; do
+          NS="${ENTRY%%:*}"
+          RELEASE="${ENTRY##*:}"
+          kubectl apply -f - <<EOF
+        apiVersion: v1
+        kind: Namespace
+        metadata:
+          name: $NS
+          labels:
+            app.kubernetes.io/managed-by: Helm
+          annotations:
+            meta.helm.sh/release-name: $RELEASE
+            meta.helm.sh/release-namespace: $NS
+            helm.sh/resource-policy: keep
+        EOF
+        done
+
   registry-auth:
     desc: "🔑 patch default serviceaccount 讓 web/service namespace 自動帶 imagePullSecrets"
     silent: true
     cmds:
       - |
         PULL_SECRET="local-registry-auth"
-        for NS in web service; do
+        for NS in {{.WEB_NS}} service; do
           kubectl patch serviceaccount default -n "$NS" \
             -p "{\"imagePullSecrets\": [{\"name\": \"${PULL_SECRET}\"}]}" 2>/dev/null \
             && echo "✅ default serviceaccount ($NS): imagePullSecrets 已設定" \
@@ -37,15 +73,18 @@ tasks:
     silent: true
     cmds:
       - helm upgrade --install web-database ./deploy/helm/app/web-database
-          --namespace web
+          --namespace {{.WEB_NS}}
           --values deploy/helm/app/web-database/values-default.yaml
       - helm upgrade --install redis ./deploy/helm/app/redis
-          --namespace web
+          --namespace {{.WEB_NS}}
           --values deploy/helm/app/redis/values-default.yaml
       - helm upgrade --install web ./deploy/helm/app/web
-          --namespace web
+          --namespace {{.WEB_NS}}
           --values deploy/helm/app/web/values-default.yaml
           --set development.mountPath={{.ROOT_DIR}}
+          --set php_image.repository="registry.local/{{.PROJECT_NAME}}-php-fpm"
+          --set nginx_image.repository="registry.local/{{.PROJECT_NAME}}-nginx"
+          --set "ingress.hostnames={{{.WEB_HOSTNAME}}}"
       - task: pulse
       - helm upgrade --install workflow-database ./deploy/helm/app/workflow-database
           --namespace service
@@ -71,7 +110,6 @@ tasks:
     desc: "🌐 部署網路基礎（Cilium 必須最先啟動，因為 kube-proxy 已移除）"
     silent: true
     cmds:
-      - kubectl apply -k deploy/k8s/base
       - helm dependency update ./deploy/helm/infra/cilium
       - helm upgrade --install cilium ./deploy/helm/infra/cilium
           --namespace kube-system
@@ -139,41 +177,41 @@ tasks:
         done
 
   push-images:
-    desc: "🔨 建置並推送開發用 image（my-dev-php-fpm、my-vite-server、my-inner-unprivileged-nginx）"
+    desc: "🔨 建置並推送開發用 image（以 PROJECT_NAME 為 prefix 避免多專案碰撞）"
     silent: true
     cmds:
       - |
         REGISTRY="registry.local"
+        PROJECT="{{.PROJECT_NAME}}"
 
-        # my-php-release（my-dev-php-fpm 的基底，需要 my-php-base）
+        # php-release（dev php-fpm 的基底，需要 my-php-base）
         docker pull ${REGISTRY}/my-php-base:8.4 && docker tag ${REGISTRY}/my-php-base:8.4 my-php-base:8.4
         docker build --target main \
           -f ./docker/web/app/php-fpm/builder.Dockerfile \
-          -t my-php-builder:8.4 \
+          -t ${PROJECT}-php-builder:8.4 \
           --secret id=build_env,src=.env .
         docker build -f ./docker/web/app/php-fpm/release.Dockerfile \
-          -t my-php-release:debian-bookworm .
+          -t ${PROJECT}-php-release:debian-bookworm .
 
-        # my-dev-php-fpm
+        # dev php-fpm
         docker build -f ./docker/web/app/php-fpm/dev/dev.Dockerfile \
-          -t my-dev-php-fpm:debian-bookworm .
+          -t ${PROJECT}-php-fpm:debian-bookworm .
 
-        # my-vite-server
+        # vite-server
         docker build -f ./docker/web/app/vite-serve/Dockerfile.vite-serve \
-          -t my-vite-server:20-bookworm .
+          -t ${PROJECT}-vite-server:20-bookworm .
 
-        # my-inner-unprivileged-nginx
+        # nginx
         docker build -f ./docker/web/app/nginx/Dockerfile.nginx \
-          -t my-inner-unprivileged-nginx:alpine .
+          -t ${PROJECT}-nginx:alpine .
 
         # 推送至 registry
         for image in \
-          "my-dev-php-fpm:debian-bookworm" \
-          "my-vite-server:20-bookworm" \
-          "my-inner-unprivileged-nginx:alpine"; do
+          "${PROJECT}-php-fpm:debian-bookworm" \
+          "${PROJECT}-vite-server:20-bookworm" \
+          "${PROJECT}-nginx:alpine"; do
           name="${image%%:*}"
           tag="${image##*:}"
-          docker tag ${image} ${REGISTRY}/${name}:${tag}
           docker push ${REGISTRY}/${name}:${tag}
         done
 
@@ -195,7 +233,7 @@ tasks:
       - helm upgrade --install app-certifications ./deploy/helm/infra/app-certifications
           --namespace cert-manager
       - kubectl wait --for=condition=Ready certificate/printer-cert
-          --namespace web --timeout=120s
+          --namespace {{.WEB_NS}} --timeout=120s
 
 
 
@@ -211,5 +249,4 @@ tasks:
           --namespace kube-system
           --values deploy/helm/infra/k3s-maintenance/values.yaml
           --values deploy/helm/infra/k3s-maintenance/values-default.yaml
-      - kubectl apply -k deploy/k8s/base
 

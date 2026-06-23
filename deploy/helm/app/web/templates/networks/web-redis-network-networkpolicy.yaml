@@ -3,7 +3,7 @@ kind: NetworkPolicy
 metadata:
   creationTimestamp: null
   name: web-redis-network
-  namespace: web
+  namespace: {{ .Release.Namespace }}
   labels:
     {{ include "base.metadata.labels.managed_by" . | nindent 4 }}
   annotations:

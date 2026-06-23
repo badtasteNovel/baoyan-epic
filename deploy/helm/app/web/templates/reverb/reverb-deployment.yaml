@@ -5,7 +5,7 @@ metadata:
     io.kompose.service: reverb
     {{ include "base.metadata.labels.managed_by" . | nindent 4 }}
   name: reverb
-  namespace: web # <--- 這裡指定門牌號碼
+  namespace: {{ .Release.Namespace }}
   annotations:
     {{ include "base.metadata.annotations.release" . | nindent 4 }}
 spec:

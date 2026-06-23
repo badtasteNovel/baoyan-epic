@@ -1,11 +1,12 @@
 DATABASE_CONNECTION="migrate_runner"
 readonly DATABASE_CONNECTION
+WEB_NS=$(grep '^K3S_WEB_RESOURCE_NAMESPACE=' environment/.env 2>/dev/null | cut -d'=' -f2- || echo "web-baoyan")
 
 # ---------------------------------------------------------
 # 調整後的私有穿透函式 (移除 seed_mode)
 # ---------------------------------------------------------
 _kexec() {
-    kubectl exec -i deployment/php-fpm-nginx -n web -c php-fpm -- \
+    kubectl exec -i deployment/php-fpm-nginx -n "${WEB_NS}" -c php-fpm -- \
         env SESSION_DRIVER=array "$@"
 }
 

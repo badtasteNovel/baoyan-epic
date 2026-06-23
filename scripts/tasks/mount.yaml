@@ -2,6 +2,8 @@
 version: '3'
 vars:
   CIFS_SMBCLIENT: "./scripts/bin/cifs-smbclient.sh"
+  WEB_NS:
+    sh: grep '^K3S_WEB_RESOURCE_NAMESPACE=' environment/.env 2>/dev/null | cut -d'=' -f2- || echo "web-baoyan"
 tasks:
   unmount:
     desc: "🛡️ 選擇並安全卸載 /mnt 下的掛載點"
@@ -52,12 +54,12 @@ tasks:
     desc: "設定掛載憑證內容"
     deps: ['_k8s-backup-config']
     status:
-      - kubectl get secret nas-backup-creds -n web
+      - kubectl get secret nas-backup-creds -n {{.WEB_NS}}
     cmds:
       - |
         sudo kubectl create secret generic nas-backup-creds \
           --from-env-file=/root/.nascredentials \
-          --namespace web \
+          --namespace {{.WEB_NS}} \
           --dry-run=client -o yaml | kubectl apply -f -
     preconditions:
       - sh: '[ $(id -u) -eq 0 ]'

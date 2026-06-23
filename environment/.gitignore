@@ -1,1 +1,6 @@
-.env
+# ignore 所有檔案，保留 .example 範本
+*
+!.gitignore
+!**/.gitignore
+!*.example
+!**/*.example

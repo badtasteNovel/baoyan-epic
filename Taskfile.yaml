@@ -1,5 +1,8 @@
 
 version: '3'
+vars:
+  WEB_NS:
+    sh: grep '^K3S_WEB_RESOURCE_NAMESPACE=' environment/.env 2>/dev/null | cut -d'=' -f2- || echo "web-baoyan"
 includes:
   debug: scripts/tasks/debug.yaml
   mount: scripts/tasks/mount.yaml
@@ -102,7 +105,7 @@ tasks:
     desc: '在 php-fpm 容器執行指令（task php -- php artisan test ...）'
     silent: true
     cmds:
-      - kubectl exec -i deployment/php-fpm-nginx -n web -c php-fpm -- {{.CLI_ARGS}}
+      - kubectl exec -i deployment/php-fpm-nginx -n {{.WEB_NS}} -c php-fpm -- {{.CLI_ARGS}}
   pulse:
     desc: '執行 Laravel Pulse migrate'
     silent: true
@@ -110,7 +113,7 @@ tasks:
     cmds:
       - |
         if gum confirm "確認要執行 Pulse migrate 嗎？"; then
-          kubectl exec -i deployment/php-fpm-nginx -n web -c php-fpm -- \
+          kubectl exec -i deployment/php-fpm-nginx -n {{.WEB_NS}} -c php-fpm -- \
             env SESSION_DRIVER=array \
             php artisan migrate --database=pulse --path=database/migrations/pulse --force
           gum style --foreground 118 "✅ Pulse 資料庫遷移成功！"
@@ -126,7 +129,7 @@ tasks:
     cmds:
       - |
         if gum confirm "確認要執行 Telescope migrate 嗎？"; then
-          kubectl exec -i deployment/php-fpm-nginx -n web -c php-fpm -- \
+          kubectl exec -i deployment/php-fpm-nginx -n {{.WEB_NS}} -c php-fpm -- \
             env SESSION_DRIVER=array \
             php artisan migrate --database=telescope --path=database/migrations/telescope --force
           gum style --foreground 118 "✅ Telescope 資料庫遷移成功！"
@@ -187,19 +190,19 @@ tasks:
         done) &
         (while true; do
           echo "[vite] port-forward 啟動..."
-          kubectl port-forward -n web svc/vite-serve-service 5173:5173 --address=127.0.0.1
+          kubectl port-forward -n {{.WEB_NS}} svc/vite-serve-service 5173:5173 --address=127.0.0.1
           echo "[vite] 斷線，重連中..."
           sleep 1
         done) &
         (while true; do
           echo "[db] port-forward 啟動..."
-          kubectl port-forward -n web svc/database 5432:5432 --address=127.0.0.1
+          kubectl port-forward -n {{.WEB_NS}} svc/database 5432:5432 --address=127.0.0.1
           echo "[db] 斷線，重連中..."
           sleep 1
         done) &
         watchexec --exts php \
           --ignore storage --ignore vendor --ignore node_modules \
-          -- kubectl exec -n web deployment/php-fpm-nginx -c php-fpm -- pkill -USR2 php-fpm &
+          -- kubectl exec -n {{.WEB_NS}} deployment/php-fpm-nginx -c php-fpm -- pkill -USR2 php-fpm &
         echo "✅ dev 模式已啟動，按 Ctrl+C 停止所有服務"
         wait
         END
