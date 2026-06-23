@@ -26,6 +26,16 @@ tasks:
       - task: registry-auth
 
 
+  base:
+    desc: "🚀 已有共用資源時，只部署本專案（namespace + image + secret + app）"
+    silent: true
+    cmds:
+      - task: namespaces
+      - task: push-images
+      - task secret:default
+      - task: registry-auth
+      - task: app
+
   namespaces:
     desc: "🗂️ 建立所有必要的 namespace（含 Helm 管理標籤，web namespace 從 environment/.env 讀取）"
     silent: true
