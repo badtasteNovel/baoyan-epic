@@ -44,7 +44,7 @@ spec:
     - to:
       - podSelector:
           matchLabels:
-            io.kompose.network/web-redis-network: "true" # 💥 新增這行，允許連到 Redis
+            io.kompose.network/web-valkey-network: "true" # 💥 新增這行，允許連到 Redis
     - to:
       - namespaceSelector:
           matchLabels:

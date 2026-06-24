@@ -33,7 +33,7 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: redis
+  name: valkey
   namespace: argocd
   annotations:
     "helm.sh/hook": {{ $hook }}
@@ -43,7 +43,7 @@ spec:
   source:
     repoURL: {{ $repoURL }}
     targetRevision: {{ $targetRevision }}
-    path: deploy/helm/app/redis
+    path: deploy/helm/app/valkey
     helm:
       valueFiles:
         - values-production.yaml

@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   labels:
     io.kompose.network/php-app-network: "true"
-    io.kompose.network/web-redis-network: "true"
+    io.kompose.network/web-valkey-network: "true"
     io.kompose.network/web-app-network: "true"
     io.kompose.service: nginx
     {{ include "base.metadata.labels.managed_by" . | nindent 4 }}
@@ -16,7 +16,7 @@ spec:
   selector:
     matchLabels:
       io.kompose.network/php-app-network: "true"
-      io.kompose.network/web-redis-network: "true"
+      io.kompose.network/web-valkey-network: "true"
       io.kompose.network/web-app-network: "true"
       io.kompose.service: nginx
   strategy:
@@ -25,7 +25,7 @@ spec:
     metadata:
       labels:
         io.kompose.network/php-app-network: "true"
-        io.kompose.network/web-redis-network: "true"
+        io.kompose.network/web-valkey-network: "true"
         io.kompose.network/web-app-network: "true"
         io.kompose.service: nginx
       annotations:

@@ -85,16 +85,18 @@ tasks:
       - helm upgrade --install web-database ./deploy/helm/app/web-database
           --namespace {{.WEB_NS}}
           --values deploy/helm/app/web-database/values-default.yaml
-      - helm upgrade --install redis ./deploy/helm/app/redis
+      - helm upgrade --install valkey ./deploy/helm/app/valkey
           --namespace {{.WEB_NS}}
-          --values deploy/helm/app/redis/values-default.yaml
-      - helm upgrade --install web ./deploy/helm/app/web
-          --namespace {{.WEB_NS}}
-          --values deploy/helm/app/web/values-default.yaml
-          --set development.mountPath={{.ROOT_DIR}}
-          --set php_image.repository="registry.local/{{.PROJECT_NAME}}-php-fpm"
-          --set nginx_image.repository="registry.local/{{.PROJECT_NAME}}-nginx"
-          --set "ingress.hostnames={{{.WEB_HOSTNAME}}}"
+          --values deploy/helm/app/valkey/values-default.yaml
+      - |
+        WEB_HOSTNAME="{{.WEB_HOSTNAME}}"
+        helm upgrade --install web ./deploy/helm/app/web \
+          --namespace {{.WEB_NS}} \
+          --values deploy/helm/app/web/values-default.yaml \
+          --set development.mountPath={{.ROOT_DIR}} \
+          --set php_image.repository="registry.local/{{.PROJECT_NAME}}-php-fpm" \
+          --set nginx_image.repository="registry.local/{{.PROJECT_NAME}}-nginx" \
+          --set "ingress.hostnames={${WEB_HOSTNAME}}"
       - task: pulse
       - helm upgrade --install workflow-database ./deploy/helm/app/workflow-database
           --namespace service
@@ -104,10 +106,10 @@ tasks:
           --values deploy/helm/app/services/values-default.yaml
 
   pulse:
-    desc: "📊 部署 monitor 監控基礎設施（pulse-redis、monitor-postgresql）"
+    desc: "📊 部署 monitor 監控基礎設施（pulse-valkey、monitor-postgresql）"
     silent: true
     cmds:
-      - helm upgrade --install pulse-redis ./deploy/helm/app/pulse-redis
+      - helm upgrade --install pulse-valkey ./deploy/helm/app/pulse-redis
           --namespace monitor
           --create-namespace
           --values deploy/helm/app/pulse-redis/values-default.yaml

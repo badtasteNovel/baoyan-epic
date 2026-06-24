@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   creationTimestamp: null
-  name: web-redis-network
+  name: web-valkey-network
   namespace: {{ .Release.Namespace }}
   labels:
     {{ include "base.metadata.labels.managed_by" . | nindent 4 }}
@@ -13,10 +13,10 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-              io.kompose.network/web-redis-network: "true"
+              io.kompose.network/web-valkey-network: "true"
         - podSelector:
             matchLabels:
               io.kompose.network/web-app-network: "true"   # 💥 重點：允許 Laravel 連進來
   podSelector:
     matchLabels:
-      io.kompose.network/web-redis-network: "true"
+      io.kompose.network/web-valkey-network: "true"

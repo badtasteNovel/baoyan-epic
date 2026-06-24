@@ -88,9 +88,9 @@ tasks:
       - helm upgrade --install web-database ./deploy/helm/app/web-database
           --namespace {{.WEB_NS}}
           --values deploy/helm/app/web-database/values-production.yaml
-      - helm upgrade --install redis ./deploy/helm/app/redis
+      - helm upgrade --install valkey ./deploy/helm/app/valkey
           --namespace {{.WEB_NS}}
-          --values deploy/helm/app/redis/values-production.yaml
+          --values deploy/helm/app/valkey/values-production.yaml
       - helm upgrade --install web ./deploy/helm/app/web
           --namespace {{.WEB_NS}}
           --values deploy/helm/app/web/values-production.yaml
@@ -103,10 +103,10 @@ tasks:
 
 
   pulse:
-    desc: "📊 部署 monitor 監控基礎設施（pulse-redis、monitor-postgresql）"
+    desc: "📊 部署 monitor 監控基礎設施（pulse-valkey、monitor-postgresql）"
     silent: true
     cmds:
-      - helm upgrade --install pulse-redis ./deploy/helm/app/pulse-redis
+      - helm upgrade --install pulse-valkey ./deploy/helm/app/pulse-redis
           --namespace monitor
           --create-namespace
           --values deploy/helm/app/pulse-redis/values-production.yaml
