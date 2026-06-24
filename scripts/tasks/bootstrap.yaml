@@ -100,16 +100,6 @@ tasks:
       - helm upgrade --install service ./deploy/helm/app/services
           --namespace service
           --values deploy/helm/app/services/values-production.yaml
-      - |
-        DB_USER="$(grep '^TEMPORAL_DB_USER=' environment/.env | cut -d'=' -f2-)"
-        helm upgrade --install temporal temporal \
-          --repo https://go.temporal.io/helm-charts \
-          --version 0.73.2 \
-          --namespace service \
-          --values deploy/values/temporal/values.yaml \
-          --values deploy/values/temporal/values-production.yaml \
-          --set "server.config.persistence.default.sql.user=$DB_USER" \
-          --set "server.config.persistence.visibility.sql.user=$DB_USER"
 
 
   pulse:
