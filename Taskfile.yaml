@@ -1,8 +1,5 @@
 
 version: '3'
-vars:
-  WEB_NS:
-    sh: grep '^K3S_WEB_RESOURCE_NAMESPACE=' environment/.env 2>/dev/null | cut -d'=' -f2- || echo "web-baoyan"
 includes:
   debug: scripts/tasks/debug.yaml
   mount: scripts/tasks/mount.yaml
@@ -24,6 +21,8 @@ includes:
 dotenv:
   - .env.task
 vars:
+  WEB_NS:
+    sh: grep '^K3S_WEB_RESOURCE_NAMESPACE=' environment/.env 2>/dev/null | cut -d'=' -f2- || echo "web-baoyan"
   RED_BANG: "\e[1;31m!\e[0m"
   CHECK_MARK: "\e[1;32m✅\e[0m"
   NAS_BACKUP_PATH: /mnt/nas_backup
