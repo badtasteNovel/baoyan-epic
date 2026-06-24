@@ -222,6 +222,7 @@ tasks:
           "${PROJECT}-nginx:alpine"; do
           name="${image%%:*}"
           tag="${image##*:}"
+          docker tag ${image} ${REGISTRY}/${name}:${tag}
           docker push ${REGISTRY}/${name}:${tag}
         done
 
